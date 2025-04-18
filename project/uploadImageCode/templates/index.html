@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Color Detector</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      #imageContainer {
+        position: relative;
+        margin-top: 20px;
+        cursor: crosshair;
+      }
+
+      #uploadedImage {
+        max-width: 100%;
+        display: block;
+        border: 1px solid #ddd;
+      }
+
+      .click-circle {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border: 2px solid white;
+        border-radius: 50%;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+      }
+
+      .color-info {
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 5px;
+        color: white;
+        font-weight: bold;
+        display: inline-block;
+        margin-right: 10px;
+        margin-bottom: 10px;
+        text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+      }
+
+      .upload-area {
+        border: 2px dashed #ccc;
+        padding: 50px;
+        text-align: center;
+        background-color: #f9f9f9;
+      }
+
+      #fileInput {
+        display: none;
+      }
+
+      .btn {
+        background-color: #4caf50;
+        border: none;
+        color: white;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+
+      #loadingIndicator {
+        display: none;
+        margin-top: 10px;
+      }
+
+      #errorMessage {
+        color: red;
+        margin-top: 10px;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Color Detector</h1>
+
+    <div class="upload-area" id="uploadArea">
+      <p>Upload an image to detect colors</p>
+      <input type="file" id="fileInput" accept="image/*" />
+      <button class="btn" id="uploadBtn">Upload Photo</button>
+    </div>
+
+    <div id="loadingIndicator">Loading image...</div>
+    <div id="errorMessage"></div>
+
+    <div id="imageContainer" style="display: none">
+      <img id="uploadedImage" alt="Uploaded Image" />
+    </div>
+
+    <div id="colorDisplay"></div>
+
+    <script>
+      let currentImageId = null;
+      const imageContainer = document.getElementById("imageContainer");
+      const colorDisplay = document.getElementById("colorDisplay");
+
+      document.getElementById("uploadBtn").addEventListener("click", () => {
+        document.getElementById("fileInput").click();
+      });
+
+      document
+        .getElementById("fileInput")
+        .addEventListener("change", function (e) {
+          if (e.target.files.length > 0) {
+            uploadImage(e.target.files[0]);
+          }
+        });
+
+      function uploadImage(file) {
+        const formData = new FormData();
+        formData.append("image", file);
+
+        document.getElementById("loadingIndicator").style.display = "block";
+        document.getElementById("errorMessage").style.display = "none";
+        imageContainer.style.display = "none";
+        colorDisplay.innerHTML = "";
+
+        fetch("/upload", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              showError(data.error);
+              return;
+            }
+
+            currentImageId = data.image_id;
+            loadImage(currentImageId);
+          })
+          .catch((error) => {
+            showError("Error uploading image: " + error.message);
+          });
+      }
+
+      function loadImage(imageId) {
+        fetch(`/image/${imageId}`)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              showError(data.error);
+              return;
+            }
+
+            const img = document.getElementById("uploadedImage");
+            img.src = data.image_data;
+
+            img.onload = function () {
+              document.getElementById("loadingIndicator").style.display =
+                "none";
+              imageContainer.style.display = "block";
+              imageContainer
+                .querySelectorAll(".click-circle")
+                .forEach((c) => c.remove());
+            };
+          })
+          .catch((error) => {
+            showError("Error loading image: " + error.message);
+          });
+      }
+
+      document
+        .getElementById("uploadedImage")
+        .addEventListener("click", function (e) {
+          if (!currentImageId) return;
+
+          const rect = e.target.getBoundingClientRect();
+          const x = Math.round(
+            (e.clientX - rect.left) * (e.target.naturalWidth / rect.width)
+          );
+          const y = Math.round(
+            (e.clientY - rect.top) * (e.target.naturalHeight / rect.height)
+          );
+
+          const displayX = e.clientX - rect.left;
+          const displayY = e.clientY - rect.top;
+
+          detectColor(currentImageId, x, y, displayX, displayY);
+        });
+
+      function detectColor(imageId, x, y, displayX, displayY) {
+        fetch(`/detect/${imageId}/${x}/${y}`)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              showError(data.error);
+              return;
+            }
+
+            const circle = document.createElement("div");
+            circle.className = "click-circle";
+            circle.style.left = displayX + "px";
+            circle.style.top = displayY + "px";
+            circle.style.backgroundColor = `rgb(${data.r}, ${data.g}, ${data.b})`;
+            imageContainer.appendChild(circle);
+
+            const info = document.createElement("div");
+            info.className = "color-info";
+            info.style.backgroundColor = `rgb(${data.r}, ${data.g}, ${data.b})`;
+            info.textContent = `${data.color_name} - RGB(${data.r}, ${data.g}, ${data.b}) - HEX: ${data.hex}`;
+
+            if (data.r + data.g + data.b > 600) {
+              info.style.color = "black";
+              info.style.textShadow = "1px 1px 1px rgba(255,255,255,0.5)";
+            } else {
+              info.style.color = "white";
+              info.style.textShadow = "1px 1px 1px rgba(0,0,0,0.5)";
+            }
+
+            colorDisplay.appendChild(info);
+          })
+          .catch((error) => {
+            showError("Error detecting color: " + error.message);
+          });
+      }
+
+      function showError(message) {
+        const errorElement = document.getElementById("errorMessage");
+        errorElement.textContent = message;
+        errorElement.style.display = "block";
+        document.getElementById("loadingIndicator").style.display = "none";
+      }
+
+      const uploadArea = document.getElementById("uploadArea");
+
+      uploadArea.addEventListener("dragover", function (e) {
+        e.preventDefault();
+        uploadArea.style.backgroundColor = "#e9e9e9";
+      });
+
+      uploadArea.addEventListener("dragleave", function () {
+        uploadArea.style.backgroundColor = "#f9f9f9";
+      });
+
+      uploadArea.addEventListener("drop", function (e) {
+        e.preventDefault();
+        uploadArea.style.backgroundColor = "#f9f9f9";
+        if (e.dataTransfer.files.length > 0) {
+          uploadImage(e.dataTransfer.files[0]);
+        }
+      });
+    </script>
+  </body>
+</html>
