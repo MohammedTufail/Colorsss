@@ -69,11 +69,11 @@ const ColorDetector = () => {
 
   return (
     <div className="p-4">
-      <h2 className="text-xl font-bold mb-2">Color Detector</h2>
-      <input type="file" onChange={handleFileChange} className="mb-2" />
+      <h2 className="text-white text-3xl font-bold mb-2">Color Detector</h2>
+      <input type="file" onChange={handleFileChange} className="mb-1" />
       <button
         onClick={uploadImage}
-        className="bg-blue-500 text-white px-4 py-2 rounded mb-4"
+        className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white  px-4 py-2 rounded mb-4"
       >
         Upload Image
       </button>
@@ -87,21 +87,18 @@ const ColorDetector = () => {
       )}
       <div className="space-y-20">
         {/* Hero Section with Enhanced Animation and Colors */}
-        <div className="relative overflow-hidden bg-gradient-rainbow rainbow-animate rounded-[2.5rem] p-8 md:p-20">
-          <div className="absolute inset-0 bg-black/30 pointer-events-none" />
-          <div className="absolute inset-0 bg-grid-white/[0.2] bg-grid-16 pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-radial from-white/20 via-transparent to-transparent pointer-events-none" />
+        <div className="relative overflow-hidden  shadow-md rounded p-3 md:p-6">
           {colorData && (
-            <div className="mt-4 p-4 border rounded shadow">
-              <p>
-                <strong>Color:</strong> {colorData.color_name}
+            <div className="mt-4 p-4 border rounded shadow bg-white text-black">
+              <p className="text-white font-bold text-xl">
+                <strong>COLOR :-</strong> {colorData.color_name}
               </p>
-              <p>
-                <strong>RGB:</strong> ({colorData.r}, {colorData.g},{" "}
+              <p className="text-white font-bold text-xl">
+                <strong>RGB :-</strong> ({colorData.r}, {colorData.g},{" "}
                 {colorData.b})
               </p>
-              <p>
-                <strong>HEX:</strong> {colorData.hex}
+              <p className="text-white font-bold text-xl">
+                <strong>HEX :-</strong> {colorData.hex}
               </p>
               <div
                 className="w-16 h-16 mt-2 rounded"
