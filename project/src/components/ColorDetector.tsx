@@ -1,6 +1,18 @@
 import React, { useState } from "react";
 import axios from "axios";
 
+const speakColorName = (name: string) => {
+  const msg = new SpeechSynthesisUtterance();
+  msg.text = name;
+  msg.lang = "en-US"; // Or "en-IN" for Indian accent
+  msg.pitch = 1;
+  msg.rate = 1;
+
+  // Stop any ongoing speech before starting new
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(msg);
+};
+
 const ColorDetector = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imageId, setImageId] = useState<string | null>(null);
@@ -58,10 +70,20 @@ const ColorDetector = () => {
     const actualY = Math.round(clickY * scaleY);
 
     try {
-      const response = await axios.get(
+      interface DetectResponse {
+        color_name: string;
+        r: number;
+        g: number;
+        b: number;
+        
+      }
+      const response = await axios.get<DetectResponse>(
         `http://localhost:5000/detect/${imageId}/${actualX}/${actualY}`
       );
       setColorData(response.data);
+      const { color_name, r, g, b } = response.data;
+      const speech = `The color is ${color_name}. RGB values are red ${r}, green ${g}, and blue ${b}.`;
+      speakColorName(speech);
     } catch (error) {
       console.error("Detection failed:", error);
     }
