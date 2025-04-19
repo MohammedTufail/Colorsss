@@ -71,7 +71,7 @@ const Layout = () => {
                 </NavLink>
                 <NavLink to="/detect-color">
                   <Upload className="h-4 w-4 mr-1.5" />
-                  Upload Image
+                  Upload Detection
                 </NavLink>
                 <NavLink to="/saved">
                   <Save className="h-4 w-4 mr-1.5" />
@@ -144,7 +144,7 @@ const Layout = () => {
 
       <footer className="bg-white mt-20">
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-9">
             <div>
               <h3 className="text-sm font-semibold text-gray-600 tracking-wider uppercase mb-4">
                 Pro Features
@@ -163,7 +163,7 @@ const Layout = () => {
                     to="/upload"
                     className="text-gray-500 hover:text-violet-600 transition-colors"
                   >
-                    Image Upload
+                    File Upload
                   </Link>
                 </li>
                 <li>

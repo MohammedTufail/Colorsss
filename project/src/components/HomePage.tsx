@@ -10,6 +10,7 @@ import {
   Paintbrush,
   Layers,
   Zap,
+  Eye,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -52,15 +53,23 @@ const HomePage = () => {
             >
               <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-fuchsia-500 opacity-0 group-hover:opacity-10 transition-opacity" />
               <Camera className="h-6 w-6 mr-3 group-hover:rotate-12 transition-transform" />
-              Start Detection
+              Live Detection
               <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
               to="/detect-color"
-              className="group relative inline-flex items-center px-8 py-4 rounded-2xl bg-white/10 backdrop-blur-lg text-white font-semibold hover:bg-white/20 transition-all transform hover:scale-105 hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] shadow-lg"
+              className="group relative inline-flex items-center px-8 py-4 rounded-2xl bg-white/95 text-violet-600 font-semibold hover:bg-white transition-all transform hover:scale-105 hover:shadow-[0_0_30px_rgba(255,255,255,0.5)] shadow-lg overflow-hidden"
             >
               <Upload className="h-6 w-6 mr-3 group-hover:-translate-y-1 transition-transform" />
-              Upload Image
+              Upload Detection
+              <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <Link
+              to="/api/upload"
+              className="group relative inline-flex items-center px-8 py-4 rounded-2xl bg-white/95 text-violet-600 font-semibold hover:bg-white transition-all transform hover:scale-105 hover:shadow-[0_0_30px_rgba(255,255,255,0.5)] shadow-lg overflow-hidden"
+            >
+              <Eye className="h-6 w-6 mr-3 group-hover:-translate-y-1 transition-transform" />
+              Accessibility Checker
               <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>

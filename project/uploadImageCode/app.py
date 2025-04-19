@@ -12,6 +12,7 @@ from datetime import datetime
 from pymongo import MongoClient
 from bson.binary import Binary
 from bson import json_util
+import tempfile  # Ensure this is at the top
 
 # ML Imports
 from sklearn.neighbors import KNeighborsRegressor
@@ -55,20 +56,39 @@ def index():
     return render_template('index.html')
 
 @app.route('/upload', methods=['POST'])
-def upload_image():
-    if 'image' not in request.files:
-        return jsonify({'error': 'No image uploaded'}), 400
-    
-    file = request.files['image']
-    
-    if file.filename == '':
-        return jsonify({'error': 'No image selected'}), 400
-    
-    file_content = file.read()
-    img = cv2.imdecode(np.frombuffer(file_content, np.uint8), cv2.IMREAD_COLOR)
+def upload_media():
+    if 'media' not in request.files:
+        return jsonify({'error': 'No media uploaded'}), 400
 
-    if img is None:
-        return jsonify({'error': 'Invalid image format'}), 400
+    file = request.files['media']
+    filename = file.filename
+
+    if filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+
+    file_content = file.read()
+    extension = filename.split('.')[-1].lower()
+
+    if extension in ['jpg', 'jpeg', 'png']:
+        img = cv2.imdecode(np.frombuffer(file_content, np.uint8), cv2.IMREAD_COLOR)
+        success = True
+    elif extension in ['mp4', 'avi', 'mov']:
+        # Create temp file safely across OS
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f".{extension}")
+        temp_path = temp_file.name
+        temp_file.write(file_content)
+        temp_file.close()
+
+        cap = cv2.VideoCapture(temp_path)
+        success, img = cap.read()
+        cap.release()
+        os.remove(temp_path)
+
+    else:
+        return jsonify({'error': 'Unsupported file type'}), 400
+
+    if not success or img is None:
+        return jsonify({'error': 'Failed to extract frame from video'}), 500
 
     image_id = str(uuid.uuid4())
     _, buffer = cv2.imencode('.jpg', img)
@@ -76,14 +96,13 @@ def upload_image():
 
     image_doc = {
         '_id': image_id,
-        'filename': file.filename,
+        'filename': filename,
         'image': image_binary,
         'processed': False,
         'timestamp': datetime.now()
     }
-    
+
     images_collection.insert_one(image_doc)
-    
     return jsonify({'image_id': image_id})
 
 @app.route('/detect/<image_id>/<int:x>/<int:y>', methods=['GET'])
@@ -103,9 +122,6 @@ def detect_color(image_id, x, y):
             return jsonify({'error': f'Coordinates ({x}, {y}) are out of bounds'}), 400
         
         b, g, r = img[y, x]
-        if r is None or g is None or b is None:
-            return jsonify({'error': 'Failed to retrieve RGB values'}), 500
-
         input_rgb = np.array([[r, g, b]])
         predicted_rgb = knn_model.predict(input_rgb).astype(int)[0]
         r_pred, g_pred, b_pred = predicted_rgb
