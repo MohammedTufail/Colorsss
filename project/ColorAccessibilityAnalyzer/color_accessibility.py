@@ -53,7 +53,7 @@ def hex_to_rgb(hex_color):
 def rgb_to_hex(rgb):
     return f'#{int(rgb[0]):02x}{int(rgb[1]):02x}{int(rgb[2]):02x}'
 
-def extract_dominant_colors(image, n_colors=5):
+def extract_dominant_colors(image, n_colors=8):
     small_image = image.resize((100, 100))
     pixels = np.array(small_image).reshape(-1, 3)
     pixels = (pixels // 16) * 16
@@ -170,4 +170,4 @@ if __name__ == '__main__':
     print(f"Current working directory: {os.getcwd()}")
     print(f"Static folder path: {app.static_folder}")
     print(f"Upload folder path: {app.config['UPLOAD_FOLDER']}")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5002)

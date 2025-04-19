@@ -43,7 +43,7 @@ const ColorDetector = () => {
 
     try {
       const response = await axios.post<{ image_id: string }>(
-        "http://localhost:5000/upload",
+        "http://localhost:5001/upload",
         formData
       );
       setImageId(response.data.image_id);
@@ -81,7 +81,7 @@ const ColorDetector = () => {
 
         try {
           const uploadRes = await axios.post<{ image_id: string }>(
-            "http://localhost:5000/upload",
+            "http://localhost:5001/upload",
             formData
           );
           const newImageId = uploadRes.data.image_id;
@@ -105,7 +105,7 @@ const ColorDetector = () => {
             b: number;
             hex: string;
           }>(
-            `http://localhost:5000/detect/${newImageId}/${actualX}/${actualY}`
+            `http://localhost:5001/detect/${newImageId}/${actualX}/${actualY}`
           );
 
           setColorData(detectRes.data);
@@ -139,7 +139,7 @@ const ColorDetector = () => {
         g: number;
         b: number;
         hex: string;
-      }>(`http://localhost:5000/detect/${imageId}/${actualX}/${actualY}`);
+      }>(`http://localhost:5001/detect/${imageId}/${actualX}/${actualY}`);
       setColorData(response.data);
       const { color_name, r, g, b } = response.data;
       const speech = `The color is ${color_name}. RGB values ${r},${g},${b}.`;

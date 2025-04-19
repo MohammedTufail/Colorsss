@@ -159,4 +159,4 @@ def get_image(image_id):
     return jsonify({'image_data': f'data:image/jpeg;base64,{base64_data}'})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(port=5001)

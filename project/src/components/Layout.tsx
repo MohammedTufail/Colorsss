@@ -10,6 +10,7 @@ import {
   X,
   Save,
   Sparkles,
+  Eye,
 } from "lucide-react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 
@@ -64,14 +65,18 @@ const Layout = () => {
                 </div>
               </Link>
 
-              <div className="hidden md:ml-8 md:flex md:space-x-2">
-                <NavLink to="/camera">
+              <div className="hidden md:ml-8 md:flex md:space-x-1">
+                <NavLink to="/live">
                   <Camera className="h-4 w-4 mr-1.5" />
                   Live Detection
                 </NavLink>
                 <NavLink to="/detect-color">
                   <Upload className="h-4 w-4 mr-1.5" />
                   Upload Detection
+                </NavLink>
+                <NavLink to="/api/upload">
+                  <Eye className="h-4 w-4 mr-1.5" />
+                  Accessibility Checker
                 </NavLink>
                 <NavLink to="/saved">
                   <Save className="h-4 w-4 mr-1.5" />
