@@ -78,9 +78,9 @@ const Layout = () => {
                   <Eye className="h-4 w-4 mr-1.5" />
                   Accessibility Checker
                 </NavLink>
-                <NavLink to="/saved">
-                  <Save className="h-4 w-4 mr-1.5" />
-                  Pro Collections
+                <NavLink to="extract_palette">
+                  <Palette className="h-4 w-4 mr-1.5" />
+                  Palette Extractor
                 </NavLink>
                 <NavLink to="/chat">
                   <MessageCircle className="h-4 w-4 mr-1.5" />

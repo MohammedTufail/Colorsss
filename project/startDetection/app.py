@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request, Response
+from flask import Flask, render_template, jsonify, request, Response 
 from flask_cors import CORS
 import cv2
 import numpy as np
@@ -8,17 +8,14 @@ from datetime import datetime
 import os
 
 app = Flask(__name__)
-# Enable CORS for all routes and all origins
 CORS(app, resources={r"/*": {"origins": "*", "methods": ["GET", "POST", "OPTIONS"], "allow_headers": ["Content-Type"]}})
 
-# Load color database from c.csv
+# Load color database
 index = ["color", "color_name", "hex", "R", "G", "B"]
-color_csv_path = 'c.csv'  # Path to your CSV file with colors
+color_csv_path = 'c.csv'
 
-# Check if file exists
 if not os.path.exists(color_csv_path):
     print(f"Warning: {color_csv_path} not found. Using sample data.")
-    # Create sample data if file not found
     sample_data = [
         [1, "red", "#FF0000", 255, 0, 0],
         [2, "green", "#00FF00", 0, 255, 0],
@@ -35,10 +32,10 @@ y = csv[["R", "G", "B"]]
 knn_model = KNeighborsRegressor(n_neighbors=3)
 knn_model.fit(X, y)
 
-# Global video capture object
+# Camera state
 video_capture = None
+camera_running = False
 
-# Helper: find closest color name
 def get_closest_color_name(R, G, B):
     minimum = float('inf')
     cname = ""
@@ -52,27 +49,30 @@ def get_closest_color_name(R, G, B):
     return cname, hex_code
 
 def initialize_camera():
-    global video_capture
-    if video_capture is None or not video_capture.isOpened():
-        video_capture = cv2.VideoCapture(0)  # 0 for the default camera
-        # Set lower resolution for better performance
+    global video_capture, camera_running
+    if not camera_running:
+        video_capture = cv2.VideoCapture(0, cv2.CAP_DSHOW)
         video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
         if not video_capture.isOpened():
             raise RuntimeError("Could not start camera")
+        camera_running = True
     return video_capture
 
 def release_camera():
-    global video_capture
+    global video_capture, camera_running
     if video_capture is not None and video_capture.isOpened():
         video_capture.release()
-        video_capture = None
+    cv2.destroyAllWindows()
+    cv2.waitKey(1)
+    video_capture = None
+    camera_running = False
 
 def gen_frames():
-    global video_capture
+    global video_capture, camera_running
     try:
-        video_capture = initialize_camera()
-        while True:
+        initialize_camera()
+        while camera_running:
             success, frame = video_capture.read()
             if not success:
                 print("Failed to capture frame")
@@ -97,21 +97,19 @@ def video_feed():
 
 @app.route('/live_color_data', methods=['GET', 'POST', 'OPTIONS'])
 def live_color_data():
-    # Handle preflight OPTIONS request
     if request.method == 'OPTIONS':
         response = app.make_default_options_response()
         return response
-        
+
     if request.method == 'POST':
         try:
             data = request.get_json()
             if not data:
                 return jsonify({'error': 'No data received'}), 400
-                
+
             x = int(data.get('x', 0))
             y = int(data.get('y', 0))
 
-            # Make sure camera is initialized
             cam = initialize_camera()
             success, frame = cam.read()
             if not success:
@@ -121,11 +119,9 @@ def live_color_data():
             if not (0 <= x < width) or not (0 <= y < height):
                 return jsonify({'error': f'Coordinates ({x}, {y}) are out of bounds'}), 400
 
-            # Get the color at the clicked position
             b, g, r = frame[y, x]
             input_rgb = np.array([[r, g, b]])
 
-            # Predict the closest RGB using the KNN model
             predicted_rgb = knn_model.predict(input_rgb).astype(int)[0]
             r_pred, g_pred, b_pred = predicted_rgb
 
@@ -142,30 +138,9 @@ def live_color_data():
         except Exception as e:
             print(f"Error in live_color_data: {e}")
             return jsonify({'error': str(e)}), 500
-    
+
     return jsonify({'error': 'Method not allowed'}), 405
 
-# Add a health check endpoint
-@app.route('/health', methods=['GET'])
-def health_check():
-    return jsonify({'status': 'healthy'}), 200
-
-# Add route to handle camera setup
-# Removed duplicate setup function
-
-# Add route to handle camera teardown
-@app.route('/teardown', methods=['GET', 'POST', 'OPTIONS'])
-def teardown():
-    if request.method == 'OPTIONS':
-        response = app.make_default_options_response()
-        return response
-        
-    try:
-        release_camera()
-        return jsonify({'status': 'Camera released successfully'}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    
 @app.route('/setup', methods=['GET', 'POST', 'OPTIONS'])
 def setup():
     if request.method == 'OPTIONS':
@@ -177,10 +152,28 @@ def setup():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/teardown', methods=['GET', 'POST', 'OPTIONS'])
+def teardown():
+    if request.method == 'OPTIONS':
+        response = app.make_default_options_response()
+        return response
+    try:
+        release_camera()
+        return jsonify({'status': 'Camera released successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/camera_status', methods=['GET'])
+def camera_status():
+    return jsonify({'camera_running': camera_running})
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({'status': 'healthy'}), 200
 
 if __name__ == '__main__':
     try:
         print("Starting Flask server...")
         app.run(debug=True, port=5000, host='0.0.0.0')
     finally:
-        release_camera()  # Ensure camera is released when app shuts down
+        release_camera()

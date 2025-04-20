@@ -11,6 +11,10 @@ const speakColorName = (speech: string) => {
   window.speechSynthesis.speak(msg);
 };
 
+const stopSpeech = () => {
+  window.speechSynthesis.cancel();
+};
+
 const ColorDetector = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileType, setFileType] = useState<"image" | "video" | null>(null);
@@ -163,6 +167,12 @@ const ColorDetector = () => {
         className="bg-gradient-to-r from-blue-500 to-indigo-600 text-bold text-white px-5 py-2 rounded mb-4"
       >
         Upload File
+      </button>
+      <button
+        onClick={stopSpeech}
+        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded ml-2"
+      >
+        Stop Speech
       </button>
 
       {preview && fileType === "image" && (
