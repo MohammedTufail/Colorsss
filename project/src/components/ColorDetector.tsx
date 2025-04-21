@@ -11,6 +11,10 @@ const speakColorName = (speech: string) => {
   window.speechSynthesis.speak(msg);
 };
 
+const stopSpeech = () => {
+  window.speechSynthesis.cancel();
+};
+
 const ColorDetector = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileType, setFileType] = useState<"image" | "video" | null>(null);
@@ -43,7 +47,7 @@ const ColorDetector = () => {
 
     try {
       const response = await axios.post<{ image_id: string }>(
-        "http://localhost:5000/upload",
+        "http://localhost:5001/upload",
         formData
       );
       setImageId(response.data.image_id);
@@ -81,7 +85,7 @@ const ColorDetector = () => {
 
         try {
           const uploadRes = await axios.post<{ image_id: string }>(
-            "http://localhost:5000/upload",
+            "http://localhost:5001/upload",
             formData
           );
           const newImageId = uploadRes.data.image_id;
@@ -105,7 +109,7 @@ const ColorDetector = () => {
             b: number;
             hex: string;
           }>(
-            `http://localhost:5000/detect/${newImageId}/${actualX}/${actualY}`
+            `http://localhost:5001/detect/${newImageId}/${actualX}/${actualY}`
           );
 
           setColorData(detectRes.data);
@@ -139,7 +143,7 @@ const ColorDetector = () => {
         g: number;
         b: number;
         hex: string;
-      }>(`http://localhost:5000/detect/${imageId}/${actualX}/${actualY}`);
+      }>(`http://localhost:5001/detect/${imageId}/${actualX}/${actualY}`);
       setColorData(response.data);
       const { color_name, r, g, b } = response.data;
       const speech = `The color is ${color_name}. RGB values ${r},${g},${b}.`;
@@ -163,6 +167,12 @@ const ColorDetector = () => {
         className="bg-gradient-to-r from-blue-500 to-indigo-600 text-bold text-white px-5 py-2 rounded mb-4"
       >
         Upload File
+      </button>
+      <button
+        onClick={stopSpeech}
+        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded ml-2"
+      >
+        Stop Speech
       </button>
 
       {preview && fileType === "image" && (

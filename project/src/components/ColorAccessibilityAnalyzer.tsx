@@ -21,7 +21,7 @@ function ColorBlindnessSimulator() {
 
   // Server base URL - adjust this based on your Flask server's address
   // Use an environment variable or configure this dynamically
-  const SERVER_BASE_URL = "http://localhost:5000";
+  const SERVER_BASE_URL = "http://localhost:5002";
 
   // Colorblind type descriptions
   const colorblindTypes = {
@@ -212,7 +212,9 @@ function ColorBlindnessSimulator() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <div className="border rounded-md p-4">
-              <h3 className="text-white text-center mb-2 font-medium">Original Image</h3>
+              <h3 className="text-white text-center mb-2 font-medium">
+                Original Image
+              </h3>
               {result.originalImage && (
                 <div className="relative min-h-[150px] flex items-center justify-center">
                   <img
@@ -313,6 +315,7 @@ function ColorBlindnessSimulator() {
                         className="w-10 h-10 rounded-md border border-gray-200"
                       ></div>
                       <span className="text-xs mt-1">Original</span>
+                      <span className="text-xs mt-1">{original}</span>
                     </div>
 
                     <span className="text-gray-400 mx-2">→</span>
@@ -323,6 +326,7 @@ function ColorBlindnessSimulator() {
                         className="w-10 h-10 rounded-md border border-gray-200"
                       ></div>
                       <span className="text-xs mt-1">Suggested</span>
+                      <span className="text-xs mt-1">{suggested}</span>
                     </div>
                   </div>
                 )
