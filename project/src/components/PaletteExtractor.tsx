@@ -30,10 +30,14 @@ export default function PaletteExtractor() {
   };
 
   const startDraw = (e: React.MouseEvent) => {
-    const rect = canvasRef.current!.getBoundingClientRect();
+    const canvas = canvasRef.current!;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
     setSelection({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY,
       width: 0,
       height: 0,
     });
@@ -42,32 +46,43 @@ export default function PaletteExtractor() {
 
   const drawRect = (e: React.MouseEvent) => {
     if (!drawing || !selection) return;
-    const rect = canvasRef.current!.getBoundingClientRect();
-    const width = e.clientX - rect.left - selection.x;
-    const height = e.clientY - rect.top - selection.y;
-    setSelection({ ...selection, width, height });
+    const canvas = canvasRef.current!;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    const newWidth = (e.clientX - rect.left) * scaleX - selection.x;
+    const newHeight = (e.clientY - rect.top) * scaleY - selection.y;
+
+    setSelection({ ...selection, width: newWidth, height: newHeight });
   };
 
   const endDraw = () => {
     setDrawing(false);
-    if (selection && fileBlob) {
-      const formData = new FormData();
-      formData.append("image", fileBlob);
-      formData.append("x", selection.x.toString());
-      formData.append("y", selection.y.toString());
-      formData.append("width", selection.width.toString());
-      formData.append("height", selection.height.toString());
+    if (!selection || !fileBlob) return;
 
-      axios
-        .post<ColorInfo[]>("http://localhost:5003/extract_palette", formData)
-        .then((res) => {
-          setColors(res.data);
-        });
+    if (Math.abs(selection.width) < 10 || Math.abs(selection.height) < 10) {
+      alert("Please select a larger area.");
+      return;
     }
+
+    const formData = new FormData();
+    formData.append("image", fileBlob);
+    formData.append("x", Math.round(selection.x).toString());
+    formData.append("y", Math.round(selection.y).toString());
+    formData.append("width", Math.round(selection.width).toString());
+    formData.append("height", Math.round(selection.height).toString());
+
+    axios
+      .post<ColorInfo[]>("http://localhost:5003/extract_palette", formData)
+      .then((res) => {
+        setColors(res.data);
+      });
   };
 
   useEffect(() => {
     if (!image || !canvasRef.current) return;
+
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     const img = new Image();
@@ -76,7 +91,9 @@ export default function PaletteExtractor() {
     img.onload = () => {
       canvas.width = img.width;
       canvas.height = img.height;
+      ctx?.clearRect(0, 0, canvas.width, canvas.height);
       ctx?.drawImage(img, 0, 0);
+
       if (selection && ctx) {
         ctx.strokeStyle = "blue";
         ctx.lineWidth = 2;
@@ -92,6 +109,7 @@ export default function PaletteExtractor() {
 
   return (
     <div className="p-4 space-y-4 max-w-[640px]">
+      <h2 className="text-white text-3xl font-bold flex mb-2">Palette Extractor</h2>
       <input type="file" accept="image/*" onChange={handleImageUpload} />
 
       {image && (

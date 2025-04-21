@@ -3,8 +3,6 @@ from flask_cors import CORS
 from PIL import Image
 import numpy as np
 from sklearn.cluster import KMeans
-import io
-import base64
 
 app = Flask(__name__)
 CORS(app)
@@ -12,12 +10,12 @@ CORS(app)
 @app.route("/extract_palette", methods=["POST"])
 def extract_palette():
     file = request.files['image']
-    x = int(request.form['x'])
-    y = int(request.form['y'])
-    width = int(request.form['width'])
-    height = int(request.form['height'])
+    x = int(float(request.form['x']))
+    y = int(float(request.form['y']))
+    width = int(float(request.form['width']))
+    height = int(float(request.form['height']))
 
-    image = Image.open(file)
+    image = Image.open(file).convert("RGB")
     cropped = image.crop((x, y, x + width, y + height))
     img_data = np.array(cropped).reshape((-1, 3))
 
